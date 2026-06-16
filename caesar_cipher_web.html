@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caesar Cipher Decryptor - Interactive Web Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+            animation: slideIn 0.8s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 2px,
+                rgba(255, 255, 255, 0.1) 2px,
+                rgba(255, 255, 255, 0.1) 4px
+            );
+            animation: float 20s infinite linear;
+        }
+
+        @keyframes float {
+            0% { transform: translateX(-50%) translateY(-50%) rotate(0deg); }
+            100% { transform: translateX(-50%) translateY(-50%) rotate(360deg); }
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            position: relative;
+            z-index: 1;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 40px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            align-items: start;
+        }
+
+        .input-section, .output-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .input-section:hover, .output-section:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+
+        .section-title {
+            font-size: 1.5em;
+            color: #333;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .icon {
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+        }
+
+        textarea, input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: #f9f9f9;
+        }
+
+        textarea:focus, input:focus, select:focus {
+            outline: none;
+            border-color: #4ecdc4;
+            background: white;
+            transform: scale(1.02);
+            box-shadow: 0 5px 15px rgba(78, 205, 196, 0.2);
+        }
+
+        .mode-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .mode-option {
+            position: relative;
+        }
+
+        .mode-option input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .mode-label {
+            display: block;
+            padding: 12px 16px;
+            background: #f0f0f0;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .mode-option input[type="radio"]:checked + .mode-label {
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            color: white;
+            border-color: transparent;
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .shift-input {
+            display: none;
+            animation: slideDown 0.3s ease;
+        }
+
+        .shift-input.show {
+            display: block;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                max-height: 0;
+            }
+            to {
+                opacity: 1;
+                max-height: 100px;
+            }
+        }
+
+        .decrypt-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .decrypt-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .decrypt-btn:active {
+            transform: translateY(0);
+        }
+
+        .decrypt-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .decrypt-btn:active::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f0f0f0;
+            border-top: 4px solid #4ecdc4;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            border-left: 4px solid #4ecdc4;
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .results.show {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .result-item {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .result-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border-color: #4ecdc4;
+        }
+
+        .result-item.best {
+            border-color: #ff6b6b;
+            background: linear-gradient(135deg, #fff5f5 0%, #ffe0e0 100%);
+        }
+
+        .result-item.best::before {
+            content: '★';
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            color: #ff6b6b;
+            font-size: 20px;
+            animation: sparkle 2s infinite;
+        }
+
+        @keyframes sparkle {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.2) rotate(180deg); }
+        }
+
+        .shift-number {
+            display: inline-block;
+            background: #4ecdc4;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+
+        .copy-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .copy-btn:hover {
+            background: #218838;
+            transform: scale(1.05);
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transform: translateX(300px);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .floating-elements {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .floating-element {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float-random 15s infinite linear;
+        }
+
+        @keyframes float-random {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .mode-selector {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .alphabet-animation {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            color: rgba(255, 255, 255, 0.8);
+            animation: letterShift 3s infinite;
+        }
+
+        @keyframes letterShift {
+            0%, 100% { transform: translateX(0) rotate(0deg); }
+            25% { transform: translateX(10px) rotate(90deg); }
+            50% { transform: translateX(0) rotate(180deg); }
+            75% { transform: translateX(-10px) rotate(270deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="floating-elements"></div>
+    
+    <div class="container">
+        <div class="header">
+            <div class="alphabet-animation">A→D</div>
+            <h1>🔓 Caesar Cipher Decryptor</h1>
+            <p>Unlock the secrets of ancient encryption with modern technology</p>
+        </div>
+
+        <div class="main-content">
+            <div class="input-section">
+                <h2 class="section-title">
+                    <span class="icon">🔐</span>
+                    Input & Settings
+                </h2>
+
+                <div class="form-group">
+                    <label for="cipherText">Cipher Text</label>
+                    <textarea id="cipherText" rows="4" placeholder="Enter your encrypted text here... (e.g., KHOOR)">KHOOR</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Decryption Mode</label>
+                    <div class="mode-selector">
+                        <div class="mode-option">
+                            <input type="radio" id="manual" name="mode" value="manual" checked>
+                            <label for="manual" class="mode-label">Manual Shift</label>
+                        </div>
+                        <div class="mode-option">
+                            <input type="radio" id="brute" name="mode" value="brute">
+                            <label for="brute" class="mode-label">Brute Force</label>
+                        </div>
+                        <div class="mode-option">
+                            <input type="radio" id="auto" name="mode" value="auto">
+                            <label for="auto" class="mode-label">Auto Detect</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="shiftInput" class="form-group shift-input show">
+                    <label for="shiftValue">Shift Value (1-25)</label>
+                    <input type="number" id="shiftValue" min="1" max="25" value="3">
+                </div>
+
+                <button class="decrypt-btn" onclick="decrypt()">
+                    🚀 Decrypt Message
+                </button>
+
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>Decrypting your message...</p>
+                </div>
+            </div>
+
+            <div class="output-section">
+                <h2 class="section-title">
+                    <span class="icon">📊</span>
+                    Results
+                </h2>
+
+                <div id="results" class="results">
+                    <p>Your decrypted results will appear here...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="notification" id="notification">
+        Copied to clipboard!
+    </div>
+
+    <script>
+        // English letter frequency for analysis
+        const englishFreq = {
+            'E': 12.70, 'T': 9.06, 'A': 8.17, 'O': 7.51, 'I': 6.97,
+            'N': 6.75, 'S': 6.33, 'H': 6.09, 'R': 5.99, 'D': 4.25,
+            'L': 4.03, 'C': 2.78, 'U': 2.76, 'M': 2.41, 'W': 2.36,
+            'F': 2.23, 'G': 2.02, 'Y': 1.97, 'P': 1.93, 'B': 1.29,
+            'V': 0.98, 'K': 0.77, 'J': 0.15, 'X': 0.15, 'Q': 0.10, 'Z': 0.07
+        };
+
+        // Initialize floating animation elements
+        function createFloatingElements() {
+            const container = document.querySelector('.floating-elements');
+            const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            
+            for (let i = 0; i < 15; i++) {
+                const element = document.createElement('div');
+                element.className = 'floating-element';
+                element.textContent = letters[Math.floor(Math.random() * letters.length)];
+                element.style.left = Math.random() * 100 + '%';
+                element.style.animationDelay = Math.random() * 15 + 's';
+                element.style.animationDuration = (10 + Math.random() * 10) + 's';
+                container.appendChild(element);
+            }
+        }
+
+        // Mode change handler
+        document.addEventListener('DOMContentLoaded', function() {
+            const modeRadios = document.querySelectorAll('input[name="mode"]');
+            const shiftInput = document.getElementById('shiftInput');
+
+            modeRadios.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    if (this.value === 'manual') {
+                        shiftInput.classList.add('show');
+                    } else {
+                        shiftInput.classList.remove('show');
+                    }
+                });
+            });
+
+            createFloatingElements();
+        });
+
+        // Caesar cipher decryption function
+        function decryptWithShift(text, shift) {
+            return text.split('').map(char => {
+                if (char.match(/[a-zA-Z]/)) {
+                    const isUpper = char === char.toUpperCase();
+                    const charCode = char.toUpperCase().charCodeAt(0);
+                    const shifted = ((charCode - 65 - shift + 26) % 26) + 65;
+                    const result = String.fromCharCode(shifted);
+                    return isUpper ? result : result.toLowerCase();
+                }
+                return char;
+            }).join('');
+        }
+
+        // Calculate chi-squared for frequency analysis
+        function calculateChiSquared(text) {
+            const letters = text.replace(/[^A-Z]/g, '').toUpperCase();
+            if (letters.length === 0) return Infinity;
+
+            const letterCount = {};
+            for (let letter of letters) {
+                letterCount[letter] = (letterCount[letter] || 0) + 1;
+            }
+
+            let chiSquared = 0;
+            for (let letter of 'ABCDEFGHIJKLMNOPQRSTUVWXYZ') {
+                const observed = letterCount[letter] || 0;
+                const expected = (englishFreq[letter] || 0) / 100 * letters.length;
+                if (expected > 0) {
+                    chiSquared += Math.pow(observed - expected, 2) / expected;
+                }
+            }
+
+            return chiSquared;
+        }
+
+        // Main decrypt function
+        async function decrypt() {
+            const cipherText = document.getElementById('cipherText').value.trim();
+            const mode = document.querySelector('input[name="mode"]:checked').value;
+            const shiftValue = parseInt(document.getElementById('shiftValue').value);
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+
+            if (!cipherText) {
+                alert('Please enter cipher text to decrypt.');
+                return;
+            }
+
+            if (!cipherText.match(/[a-zA-Z]/)) {
+                alert('Cipher text must contain at least some letters.');
+                return;
+            }
+
+            // Show loading animation
+            loading.style.display = 'block';
+            results.classList.remove('show');
+
+            // Simulate processing time for better UX
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            let resultsHTML = '';
+
+            if (mode === 'manual') {
+                if (shiftValue < 1 || shiftValue > 25) {
+                    alert('Shift value must be between 1 and 25.');
+                    loading.style.display = 'none';
+                    return;
+                }
+
+                const decrypted = decryptWithShift(cipherText, shiftValue);
+                resultsHTML = `
+                    <h3>Manual Shift Decryption</h3>
+                    <div class="result-item best">
+                        <span class="shift-number">Shift ${shiftValue}</span>
+                        <strong>${decrypted}</strong>
+                        <button class="copy-btn" onclick="copyToClipboard('${decrypted}')">Copy</button>
+                    </div>
+                    <p><strong>Original:</strong> ${cipherText}</p>
+                `;
+
+            } else if (mode === 'brute') {
+                resultsHTML = '<h3>Brute Force Analysis - All Possibilities</h3>';
+                for (let shift = 1; shift <= 25; shift++) {
+                    const decrypted = decryptWithShift(cipherText, shift);
+                    resultsHTML += `
+                        <div class="result-item" onclick="selectResult(this)">
+                            <span class="shift-number">Shift ${shift}</span>
+                            ${decrypted}
+                            <button class="copy-btn" onclick="copyToClipboard('${decrypted}')">Copy</button>
+                        </div>
+                    `;
+                }
+
+            } else { // auto detect
+                const candidates = [];
+                for (let shift = 1; shift <= 25; shift++) {
+                    const decrypted = decryptWithShift(cipherText, shift);
+                    const score = calculateChiSquared(decrypted);
+                    candidates.push({shift, decrypted, score});
+                }
+
+                candidates.sort((a, b) => a.score - b.score);
+                
+                resultsHTML = '<h3>Auto Detection Results</h3>';
+                resultsHTML += `<p><strong>Most likely plaintext detected!</strong></p>`;
+                
+                for (let i = 0; i < Math.min(5, candidates.length); i++) {
+                    const candidate = candidates[i];
+                    const isBest = i === 0;
+                    resultsHTML += `
+                        <div class="result-item ${isBest ? 'best' : ''}" onclick="selectResult(this)">
+                            <span class="shift-number">Shift ${candidate.shift}</span>
+                            ${candidate.decrypted}
+                            ${isBest ? '<small style="color: #ff6b6b; font-weight: bold;"> ← Best Match</small>' : ''}
+                            <button class="copy-btn" onclick="copyToClipboard('${candidate.decrypted}')">Copy</button>
+                        </div>
+                    `;
+                }
+                
+                resultsHTML += `<p><strong>Original:</strong> ${cipherText}</p>`;
+            }
+
+            // Hide loading and show results with animation
+            loading.style.display = 'none';
+            results.innerHTML = resultsHTML;
+            results.classList.add('show');
+        }
+
+        // Copy to clipboard function
+        function copyToClipboard(text) {
+            navigator.clipboard.then(() => {
+                return navigator.clipboard.writeText(text);
+            }).then(() => {
+                showNotification();
+            }).catch(() => {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                showNotification();
+            });
+        }
+
+        // Show notification
+        function showNotification() {
+            const notification = document.getElementById('notification');
+            notification.classList.add('show');
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 2000);
+        }
+
+        // Select result animation
+        function selectResult(element) {
+            // Remove previous selections
+            document.querySelectorAll('.result-item').forEach(item => {
+                item.style.transform = '';
+                item.style.boxShadow = '';
+            });
+            
+            // Highlight selected
+            element.style.transform = 'scale(1.02)';
+            element.style.boxShadow = '0 10px 30px rgba(78, 205, 196, 0.3)';
+        }
+
+        // Enter key support
+        document.getElementById('cipherText').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                decrypt();
+            }
+        });
+    </script>
+</body>
+</html>
